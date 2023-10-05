@@ -5,7 +5,7 @@ pipeline {
         stage ('Build Image') {
             steps {
                 script {
-                    dockerapp = docker.build("fabricioveronez/web-live-app:${env.BUILD_ID}", "-f ./src/Dockerfile ./src")
+                    dockerapp = docker.build("lauromazzoni/web-live-app:${env.BUILD_ID}", "-f ./src/Dockerfile ./src")
                 }
             }
         }
@@ -26,8 +26,7 @@ pipeline {
                 tag_version = "${env.BUILD_ID}"
             }
             steps {
-                withAWS(credentials: 'jenkins-credential', region: 'us-east-1') {
-                    sh 'aws eks update-kubeconfig --name live-eks'
+                withKubeConfig([credentialsId: 'kube']) {
                     sh 'sed -i "s/{{tag}}/$tag_version/g" ./k8s/deployment.yaml'
                     sh 'kubectl apply -f ./k8s/deployment.yaml'
                 }
